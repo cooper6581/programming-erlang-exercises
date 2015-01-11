@@ -3,7 +3,6 @@
 
 %% Exercise 1
 %% 
-
 start(AnAtom, Fun) ->
     case whereis(AnAtom) of
         undefined -> register(AnAtom, spawn(fun() -> Fun() end));
@@ -15,11 +14,22 @@ wait() ->
         _ -> void
     end.
 
+%% Exercise 2
+%%
+max(N) ->
+    statistics(runtime),
+    statistics(wall_clock),
+    Procs = [spawn(fun() -> wait() end) || _ <- lists:seq(1,N)],
+    {_, Runtime} = statistics(runtime),
+    {_, Wall} = statistics(wall_clock),
+    lists:foreach(fun(Pid) -> Pid ! die end, Procs),
+    U1 = Runtime * 1000 / N,
+    U2 = Wall * 1000 / N,
+    io:format("~p,~p,~p~n", [N, U1, U2]).
+
 %% Exercise 3
 %%
-
 %-define(debug, true).
-
 -ifdef(debug).
 -define(DEBUG(Format, Args), io:format("[DEBUG] - " ++ Format, Args)).
 -else.
@@ -85,6 +95,8 @@ test() ->
     true = is_pid(whereis(test)),
     {error, previously_defined} = start(test, fun ?MODULE:wait/0),
     test ! die,
+    %% exercise 2
+    [max(trunc(math:pow(2,X))) || X <- lists:seq(0,17)],
     %% exercise 3
-    ring(5,3),
+    ring(500,3000),
     ok.
